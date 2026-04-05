@@ -10,42 +10,78 @@ document.addEventListener('DOMContentLoaded', () => {
   const rotator = new MessageRotator(board);
   const keyboard = new KeyboardController(rotator, soundEngine);
 
-  // Initialize audio on first user interaction (browser autoplay policy)
+  const animDot = document.getElementById('anim-dot');
+  const statusText = document.getElementById('status-text');
+
+  // BroadcastChannel: receive commands from control panel
+  const channel = new BroadcastChannel('flipoff_control');
+
+  channel.addEventListener('message', (e) => {
+    const { type, payload } = e.data;
+    switch (type) {
+      case 'SET_MESSAGES':
+        rotator.setMessages(payload.messages);
+        animDot.className = 'dot ctrl';
+        statusText.textContent = 'CTRL';
+        break;
+      case 'SHOW_MESSAGE':
+        rotator.showIndex(payload.index);
+        break;
+      case 'NEXT':
+        rotator.next();
+        break;
+      case 'PREV':
+        rotator.prev();
+        break;
+      case 'SET_INTERVAL':
+        rotator.setInterval(payload.ms);
+        break;
+      case 'SET_AUTOPLAY':
+        if (payload.enabled) rotator.resume();
+        else rotator.pause();
+        break;
+      case 'PING':
+        channel.postMessage({ type: 'PONG', payload: { index: rotator.currentIndex } });
+        animDot.className = 'dot live';
+        statusText.textContent = 'LIVE';
+        break;
+    }
+  });
+
+  channel.postMessage({ type: 'DISPLAY_READY' });
+
+  setInterval(() => {
+    channel.postMessage({ type: 'STATUS', payload: { index: rotator.currentIndex, transitioning: board.isTransitioning } });
+  }, 1000);
+
+  // Audio init
+  const startOverlay = document.getElementById('start-overlay');
   let audioInitialized = false;
+
   const initAudio = async () => {
     if (audioInitialized) return;
     audioInitialized = true;
     await soundEngine.init();
     soundEngine.resume();
+    startOverlay.classList.add('hidden');
+    setTimeout(() => { startOverlay.style.display = 'none'; }, 600);
+    animDot.className = 'dot live';
+    statusText.textContent = 'LIVE';
     document.removeEventListener('click', initAudio);
     document.removeEventListener('keydown', initAudio);
   };
-  document.addEventListener('click', initAudio);
+
+  startOverlay.addEventListener('click', initAudio);
   document.addEventListener('keydown', initAudio);
 
-  // Start message rotation
   rotator.start();
 
-  // Volume toggle button in header
-  const volumeBtn = document.getElementById('volume-btn');
-  if (volumeBtn) {
-    volumeBtn.addEventListener('click', () => {
-      initAudio();
-      const muted = soundEngine.toggleMute();
-      volumeBtn.classList.toggle('muted', muted);
-    });
-  }
-
-  // "Get Early Access" button: scroll to board and go fullscreen
-  const ctaBtn = document.getElementById('cta-btn');
-  if (ctaBtn) {
-    ctaBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      initAudio();
-      boardContainer.scrollIntoView({ behavior: 'smooth' });
-      setTimeout(() => {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }, 400);
-    });
-  }
+  window._showToast = (msg) => {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 1400);
+  };
 });
