@@ -11,39 +11,29 @@
       text-align: center;
     }
 
-    h1 {
-      margin-top: 20px;
-    }
-
     #controls {
       margin: 15px;
     }
 
     #grid {
       display: grid;
-      grid-template-columns: repeat(10, 50px);
       gap: 5px;
       justify-content: center;
       margin-top: 20px;
     }
 
     .block {
-      width: 50px;
-      height: 50px;
+      width: 40px;
+      height: 40px;
       background: #333;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .block:hover {
-      outline: 2px solid white;
     }
   </style>
 </head>
 <body>
 
-<h1>🎨 Block Editor</h1>
+<h1>🎨 Connected Editor</h1>
 
 <div id="controls">
   <input type="color" id="colorPicker" value="#ff0000">
@@ -56,23 +46,49 @@
   const grid = document.getElementById("grid");
   const colorPicker = document.getElementById("colorPicker");
 
-  // create grid
-  for (let i = 0; i < 100; i++) {
-    const block = document.createElement("div");
-    block.className = "block";
+  // 🔹 Get grid size (default 10)
+  const size = parseInt(localStorage.getItem("gridSize")) || 10;
 
-    block.addEventListener("click", () => {
-      block.style.background = colorPicker.value;
-    });
+  // 🔹 Load saved grid data
+  let gridData = JSON.parse(localStorage.getItem("gridData")) || [];
 
-    grid.appendChild(block);
+  // Set grid columns dynamically
+  grid.style.gridTemplateColumns = `repeat(${size}, 40px)`;
+
+  function saveGrid() {
+    localStorage.setItem("gridData", JSON.stringify(gridData));
+  }
+
+  function createGrid() {
+    grid.innerHTML = "";
+
+    for (let i = 0; i < size * size; i++) {
+      const block = document.createElement("div");
+      block.className = "block";
+
+      // load saved color
+      if (gridData[i]) {
+        block.style.background = gridData[i];
+      }
+
+      block.addEventListener("click", () => {
+        const color = colorPicker.value;
+        block.style.background = color;
+        gridData[i] = color;
+        saveGrid();
+      });
+
+      grid.appendChild(block);
+    }
   }
 
   function clearGrid() {
-    document.querySelectorAll(".block").forEach(b => {
-      b.style.background = "#333";
-    });
+    gridData = [];
+    saveGrid();
+    createGrid();
   }
+
+  createGrid();
 </script>
 
 </body>
