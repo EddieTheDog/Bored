@@ -3,50 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Square Controller</title>
+    <title>Square Controller Pro</title>
     <style>
-        body { display: flex; flex-direction: column; align-items: center; background: #222; color: white; font-family: sans-serif; }
-        canvas { border: 2px solid #555; background: #000; margin-top: 10px; }
-        .ui { margin: 20px; padding: 10px; background: #333; border-radius: 8px; }
+        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: sans-serif; }
+        canvas { display: block; }
+        
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            border: 1px solid #444;
+            pointer-events: auto;
+        }
+
+        .control-group { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
+        input[type="color"] { border: none; width: 40px; height: 40px; cursor: pointer; background: none; }
     </style>
 </head>
 <body>
 
-    <div class="ui">
-        <label for="colorInput">Choose Square Color: </label>
-        <input type="color" id="colorInput" value="#00ff00">
+    <div id="ui-panel">
+        <div class="control-group">
+            <label>SQUARE COLOR</label>
+            <input type="color" id="squareColor" value="#00ffcc">
+        </div>
+        <div style="font-size: 11px; color: #777;">Use WASD or Arrows to move</div>
     </div>
 
-    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const colorInput = document.getElementById('colorInput');
+        const colorPicker = document.getElementById('squareColor');
 
-        // This object represents our square
-        let player = {
-            x: 225,
-            y: 225,
-            size: 50
+        // 1. DYNAMIC SIZING: Make canvas fill the browser window
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // 2. PLAYER OBJECT
+        const player = {
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+            size: 50,
+            speed: 5,
+            color: colorPicker.value
         };
 
-        function draw() {
-            // 1. Clear the canvas so we don't leave "trails"
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 3. INPUT TRACKING
+        const keys = {};
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
 
-            // 2. Set the color based on the color picker's current value
-            ctx.fillStyle = colorInput.value;
+        // 4. UPDATE LOGIC (Movement & Color)
+        function update() {
+            // Update color from picker every frame
+            player.color = colorPicker.value;
 
-            // 3. Draw the square
-            ctx.fillRect(player.x, player.y, player.size, player.size);
+            // Move Player
+            if (keys['ArrowUp'] || keys['KeyW']) player.y -= player.speed;
+            if (keys['ArrowDown'] || keys['KeyS']) player.y += player.speed;
+            if (keys['ArrowLeft'] || keys['KeyA']) player.x -= player.speed;
+            if (keys['ArrowRight'] || keys['KeyD']) player.x += player.speed;
 
-            // 4. Run the draw function again on the next frame
-            requestAnimationFrame(draw);
+            // Screen Boundaries
+            if (player.x < 0) player.x = 0;
+            if (player.y < 0) player.y = 0;
+            if (player.x + player.size > canvas.width) player.x = canvas.width - player.size;
+            if (player.y + player.size > canvas.height) player.y = canvas.height - player.size;
         }
 
-        // Start the animation loop
-        draw();
+        // 5. DRAW LOGIC
+        function draw() {
+            // Clear screen
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Player
+            ctx.fillStyle = player.color;
+            ctx.shadowBlur = 15; // Adds a little glow
+            ctx.shadowColor = player.color;
+            ctx.fillRect(player.x, player.y, player.size, player.size);
+            
+            // Reset shadow for performance
+            ctx.shadowBlur = 0;
+        }
+
+        // 6. GAME LOOP
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
     </script>
 </body>
 </html>
