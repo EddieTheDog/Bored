@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Controller</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; background: #222; color: white; font-family: sans-serif; }
+        canvas { border: 2px solid #555; background: #000; margin-top: 10px; }
+        .ui { margin: 20px; padding: 10px; background: #333; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="ui">
+        <label for="colorInput">Choose Square Color: </label>
+        <input type="color" id="colorInput" value="#00ff00">
+    </div>
+
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const colorInput = document.getElementById('colorInput');
+
+        // This object represents our square
+        let player = {
+            x: 225,
+            y: 225,
+            size: 50
+        };
+
+        function draw() {
+            // 1. Clear the canvas so we don't leave "trails"
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Set the color based on the color picker's current value
+            ctx.fillStyle = colorInput.value;
+
+            // 3. Draw the square
+            ctx.fillRect(player.x, player.y, player.size, player.size);
+
+            // 4. Run the draw function again on the next frame
+            requestAnimationFrame(draw);
+        }
+
+        // Start the animation loop
+        draw();
+    </script>
+</body>
+</html>
