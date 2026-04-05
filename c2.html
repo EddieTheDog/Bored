@@ -5,14 +5,10 @@
   <title>Block Editor</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       background: #111;
       color: white;
       text-align: center;
-    }
-
-    #controls {
-      margin: 15px;
+      font-family: Arial;
     }
 
     #grid {
@@ -26,36 +22,39 @@
       width: 40px;
       height: 40px;
       background: #333;
-      border-radius: 4px;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-<h1>🎨 Connected Editor</h1>
+<h1>🎨 Editor (Working)</h1>
 
-<div id="controls">
-  <input type="color" id="colorPicker" value="#ff0000">
-  <button onclick="clearGrid()">Clear</button>
-</div>
+<input type="color" id="colorPicker" value="#ff0000">
+<button onclick="clearGrid()">Clear</button>
 
 <div id="grid"></div>
 
 <script>
   const grid = document.getElementById("grid");
-  const colorPicker = document.getElementById("colorPicker");
+  const picker = document.getElementById("colorPicker");
 
-  // 🔹 Get grid size (default 10)
-  const size = parseInt(localStorage.getItem("gridSize")) || 10;
+  // SAFE load
+  let size = 10;
+  let gridData = [];
 
-  // 🔹 Load saved grid data
-  let gridData = JSON.parse(localStorage.getItem("gridData")) || [];
+  try {
+    size = parseInt(localStorage.getItem("gridSize")) || 10;
+    gridData = JSON.parse(localStorage.getItem("gridData")) || [];
+  } catch (e) {
+    console.warn("Storage error, resetting...");
+    localStorage.removeItem("gridData");
+    gridData = [];
+  }
 
-  // Set grid columns dynamically
   grid.style.gridTemplateColumns = `repeat(${size}, 40px)`;
 
-  function saveGrid() {
+  function save() {
     localStorage.setItem("gridData", JSON.stringify(gridData));
   }
 
@@ -63,28 +62,30 @@
     grid.innerHTML = "";
 
     for (let i = 0; i < size * size; i++) {
-      const block = document.createElement("div");
-      block.className = "block";
+      const div = document.createElement("div");
+      div.className = "block";
 
       // load saved color
       if (gridData[i]) {
-        block.style.background = gridData[i];
+        div.style.background = gridData[i];
       }
 
-      block.addEventListener("click", () => {
-        const color = colorPicker.value;
-        block.style.background = color;
+      div.onclick = () => {
+        const color = picker.value;
+        div.style.background = color;
         gridData[i] = color;
-        saveGrid();
-      });
+        save();
 
-      grid.appendChild(block);
+        console.log("Clicked block", i, "color:", color); // DEBUG
+      };
+
+      grid.appendChild(div);
     }
   }
 
   function clearGrid() {
     gridData = [];
-    saveGrid();
+    save();
     createGrid();
   }
 
