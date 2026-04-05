@@ -1,111 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Square Controller Pro</title>
-    <style>
-        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: sans-serif; }
-        canvas { display: block; }
-        
-        #ui-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            color: white;
-            border: 1px solid #444;
-            pointer-events: auto;
-        }
+  <meta charset="UTF-8">
+  <title>Block Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+    }
 
-        .control-group { margin-bottom: 10px; }
-        label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
-        input[type="color"] { border: none; width: 40px; height: 40px; cursor: pointer; background: none; }
-    </style>
+    h1 {
+      margin-top: 20px;
+    }
+
+    #controls {
+      margin: 15px;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(10, 50px);
+      gap: 5px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .block {
+      width: 50px;
+      height: 50px;
+      background: #333;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .block:hover {
+      outline: 2px solid white;
+    }
+  </style>
 </head>
 <body>
 
-    <div id="ui-panel">
-        <div class="control-group">
-            <label>SQUARE COLOR</label>
-            <input type="color" id="squareColor" value="#00ffcc">
-        </div>
-        <div style="font-size: 11px; color: #777;">Use WASD or Arrows to move</div>
-    </div>
+<h1>🎨 Block Editor</h1>
 
-    <canvas id="gameCanvas"></canvas>
+<div id="controls">
+  <input type="color" id="colorPicker" value="#ff0000">
+  <button onclick="clearGrid()">Clear</button>
+</div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const colorPicker = document.getElementById('squareColor');
+<div id="grid"></div>
 
-        // 1. DYNAMIC SIZING: Make canvas fill the browser window
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+<script>
+  const grid = document.getElementById("grid");
+  const colorPicker = document.getElementById("colorPicker");
 
-        // 2. PLAYER OBJECT
-        const player = {
-            x: window.innerWidth / 2,
-            y: window.innerHeight / 2,
-            size: 50,
-            speed: 5,
-            color: colorPicker.value
-        };
+  // create grid
+  for (let i = 0; i < 100; i++) {
+    const block = document.createElement("div");
+    block.className = "block";
 
-        // 3. INPUT TRACKING
-        const keys = {};
-        window.addEventListener('keydown', e => keys[e.code] = true);
-        window.addEventListener('keyup', e => keys[e.code] = false);
+    block.addEventListener("click", () => {
+      block.style.background = colorPicker.value;
+    });
 
-        // 4. UPDATE LOGIC (Movement & Color)
-        function update() {
-            // Update color from picker every frame
-            player.color = colorPicker.value;
+    grid.appendChild(block);
+  }
 
-            // Move Player
-            if (keys['ArrowUp'] || keys['KeyW']) player.y -= player.speed;
-            if (keys['ArrowDown'] || keys['KeyS']) player.y += player.speed;
-            if (keys['ArrowLeft'] || keys['KeyA']) player.x -= player.speed;
-            if (keys['ArrowRight'] || keys['KeyD']) player.x += player.speed;
+  function clearGrid() {
+    document.querySelectorAll(".block").forEach(b => {
+      b.style.background = "#333";
+    });
+  }
+</script>
 
-            // Screen Boundaries
-            if (player.x < 0) player.x = 0;
-            if (player.y < 0) player.y = 0;
-            if (player.x + player.size > canvas.width) player.x = canvas.width - player.size;
-            if (player.y + player.size > canvas.height) player.y = canvas.height - player.size;
-        }
-
-        // 5. DRAW LOGIC
-        function draw() {
-            // Clear screen
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw Player
-            ctx.fillStyle = player.color;
-            ctx.shadowBlur = 15; // Adds a little glow
-            ctx.shadowColor = player.color;
-            ctx.fillRect(player.x, player.y, player.size, player.size);
-            
-            // Reset shadow for performance
-            ctx.shadowBlur = 0;
-        }
-
-        // 6. GAME LOOP
-        function loop() {
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
-
-        loop();
-    </script>
 </body>
 </html>
